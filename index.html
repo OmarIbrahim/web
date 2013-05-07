@@ -1,0 +1,532 @@
+<!DOCTYPE HTML>
+
+<html>
+
+    <head>
+        <title> BAWAR GAME </title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: #FFFFFF;
+
+            }
+
+            .textHolder{
+                width: 400px;
+
+            }
+        </style>
+        <script src="pixi.js"></script>
+    </head>
+    <body>  
+        <script>
+
+            var backmusic = new Audio('002.wav');
+            var stage = new PIXI.Stage(0x97c56e, true);
+    
+            var renderer = PIXI.autoDetectRenderer(window.innerWidth, window.innerHeight, null);
+    
+            document.body.appendChild(renderer.view);
+    
+            renderer.view.style.position = "absolute";
+            renderer.view.style.top = "0px";
+            renderer.view.style.left = "0px";
+        
+            
+            requestAnimFrame( animate );
+            
+            
+            var texture = PIXI.Texture.fromImage("ship.png");
+            var texture2 = PIXI.Texture.fromImage("fire.png");
+            var texture3 = PIXI.Texture.fromImage("space1.jpg");
+            var texture4 = PIXI.Texture.fromImage("enemy.gif");
+            var texture5 = PIXI.Texture.fromImage("mute.png");
+            var texture6 = PIXI.Texture.fromImage("explosion.png");
+            var texture7 = PIXI.Texture.fromImage("Enemy2.png");
+            var texture8 = PIXI.Texture.fromImage("space2.jpg");
+            var texture9 = PIXI.Texture.fromImage("pause.png");
+            var texture10 = PIXI.Texture.fromImage("restart.png");
+
+
+            var tilingSprite = new PIXI.TilingSprite(texture3, window.innerWidth, window.innerHeight);
+            var tilingSprite2 = new PIXI.TilingSprite(texture8, window.innerWidth,window.innerHeight);
+
+            var Bullets = new Array();
+            var count = 0;
+            var bulletcount = 0;
+            var Enemys = new Array();
+            var Enemys2 = new Array();
+            var enemycount = 0;
+            var available = new Array();
+            var ship;
+            var gamePaused = false;
+            var hitcount = 0;
+            var health = 100;
+
+            stage.addChild(tilingSprite2);                    
+            stage.addChild(tilingSprite);
+  
+            var alive =true ;
+            var level2 = false;  
+
+            createShip(window.innerWidth/2, window.innerHeight*0.9);
+    
+            mutebutton();
+
+            createEnemy();
+            
+            createEnemy2();
+
+            createBullet();
+            
+            pausebutton();
+
+            restartbutton();
+
+            var scorecount =0;
+            
+            var text = new PIXI.Text("SCORE:"+ scorecount,"20px Arial", "red");
+            var level = new PIXI.Text("LEVEL 1","20px Arial", "green");
+            var shiplife = new PIXI.Text("Life :"+ health ,"20px Arial", "magenta");
+            
+            text.position.x = 50;
+            text.position.y = 100;
+            text.anchor.x = 0;
+            text.anchor.y = 0;
+            stage.addChild(text);  
+
+            level.position.x = 50;
+            level.position.y = 130;
+            level.anchor.x = 0;
+            level.anchor.y = 0;
+            stage.addChild(level);  
+
+            shiplife.position.x = 50;
+            shiplife.position.y = 160;
+            shiplife.anchor.x = 0;
+            shiplife.anchor.y = 0;
+            stage.addChild(shiplife);  
+            
+            
+            window.setInterval(function(){insertEnemy(Math.floor(Math.random()*20))},1500);
+
+
+            function restartbutton(){
+                var restb = new PIXI.Sprite(texture10);
+                restb.setInteractive(true);
+                restb.buttonMode = true;
+                restb.anchor.x = 0.5;
+                restb.anchor.y = 0.5;
+                restb.position.x = (19* window.innerWidth )/20;
+                restb.position.y = window.innerHeight /20;
+                restb.scale.x = restb.scale.y = 0.15;
+
+                restb.click = function (data){
+                
+                    document.location.reload(true);
+                    
+                }
+                stage.addChild(restb);
+
+            }
+
+            function explode(x,y){
+                
+                var explodesound = new Audio('explode.wav');
+                var explosion = new PIXI.Sprite(texture6);
+                explosion.setInteractive(true);
+                    
+                explosion.position.x = x;
+                explosion.position.y = y;
+                explosion.anchor.x = 0.5;
+                explosion.anchor.y = 0.5;
+        
+                
+                explosion.scale.x = explosion.scale.y = 0.75;
+                explodesound.play();  
+                stage.addChild(explosion);                      
+            }
+            
+            function finish(){
+                backmusic.pause();
+                alert("GAME OVER");
+            }
+
+            function pausebutton(){
+
+                var pauseb = new PIXI.Sprite(texture9);
+                pauseb.setInteractive(true);
+                pauseb.buttonMode = true;
+                pauseb.anchor.x = 0.5;
+                pauseb.anchor.y = 0.5;
+                pauseb.position.x = window.innerWidth /20;
+                pauseb.position.y = window.innerHeight /20;
+                pauseb.scale.x = pauseb.scale.y = 0.1;
+
+                pauseb.mousedown = pauseb.touchstart = function (data){
+            
+                    alert("Game Paused");           
+                }
+                stage.addChild(pauseb);
+            }
+            
+            function mutebutton(){
+
+                var muteb = new PIXI.Sprite(texture5);
+                muteb.setInteractive(true);
+                muteb.buttonMode = true;
+
+                muteb.anchor.x = 0.5;
+                muteb.anchor.y = 0.5;
+
+                muteb.position.x = window.innerWidth /20;
+                muteb.position.y = window.innerHeight /10;
+
+                muteb.scale.x = muteb.scale.y = 0.075;
+
+                var count = 0;
+
+                backmusic.addEventListener('ended', function() {
+                this.currentTime = 0;
+                this.play();
+                }, false);
+
+                backmusic.play();
+            
+
+                muteb.mousedown = muteb.touchstart = function (data){
+            
+                    count = count +1;
+                    var rem = count%2;          
+                    this.data = rem;
+
+                    if (this.data == 1) {
+                        backmusic.pause();
+                    }
+            
+                    if (this.data == 0 ){
+                        backmusic.play();
+                    }           
+                }
+                stage.addChild(muteb);
+            }
+
+            function createEnemy(){
+                for(i = 0 ; i<20;i++){
+
+                    Enemys[i] = new PIXI.Sprite(texture4);
+                    Enemys[i].setInteractive(true);
+                    Enemys[i].anchor.x = 0.5;
+                    Enemys[i].anchor.y = 0.5;
+                    Enemys[i].rotation = 3.1415926;
+
+                    Enemys[i].scale.x = Enemys[i].scale.y = 0.3;
+
+                    Enemys[i].position.x = 5 ; //
+                    Enemys[i].position.y = 2000; //
+                    stage.addChild(Enemys[i]);
+        
+                }
+            }
+
+            function createEnemy2(){
+                for(i=0;i<5;i++){
+                    Enemys2[i] = new PIXI.Sprite(texture7);
+                    Enemys2[i].setInteractive(true);
+                    Enemys2[i].anchor.x = 0.5;
+                    Enemys2[i].anchor.y = 0.5;
+                    Enemys2[i].rotation = 3*(3.1415926)/2;
+
+                    Enemys2[i].scale.x = Enemys2[i].scale.y = 0.3;
+                    
+                    Enemys2[i].position.x = 100 ; //
+                    Enemys2[i].position.y = 2000; //
+                    stage.addChild(Enemys2[i]);
+                 
+                }
+            }
+
+            function insertEnemy2(index2){
+
+                if (Enemys2[index2].position.y == 2000) {
+                    Enemys2[index2].position.x =  Math.random() * (window.innerWidth-50)  +10;
+                    Enemys2[index2].position.y = -80;
+                    Enemys2[index2].alpha =1;
+                       enemycount++;
+                }
+            }
+
+            function insertEnemy(index){
+                
+                if (Enemys[index].position.y==2000) {
+                    Enemys[index].position.y = -45;
+                    Enemys[index].position.x = Math.floor(Math.random() * (window.innerWidth-50) ) +10;
+
+                }
+            }
+
+            function moveEnemy(e){
+
+                e.position.y = e.position.y + 1.5;
+            }
+
+            function movebullet(b){
+
+                b.position.y = b.position.y - 10;
+            }
+
+            function createBullet(){
+                
+                
+                for(var i = 0; i<50; i++){
+        
+                    Bullets[i] =  new PIXI.Sprite(texture2);
+                    Bullets[i].setInteractive(true);
+                    Bullets[i].anchor.x = 0.5;
+                    Bullets[i].anchor.y = 0.5;
+
+                    Bullets[i].position.x = 300;
+                    Bullets[i].position.y = 2000;
+                
+                    stage.addChild(Bullets[i]);
+                }
+            }
+    
+            function createShip(x, y){
+                ship = new PIXI.Sprite(texture);
+                ship.setInteractive(true);
+                ship.buttonMode = true;
+                ship.anchor.x = 0.5;
+                ship.anchor.y = 0.5;
+        
+                ship.scale.x = ship.scale.y = 0.5;  
+
+                ship.rotation = 3.14;
+                ship.mouseover = ship.touchstart = function(data)
+                {
+                    this.data = data;
+                    this.alpha = 1;
+                    this.dragging = true;
+                };
+
+        
+                ship.mousedown = ship.touchstart = function(data)
+                {   
+                    if(Bullets[bulletcount].position.y == 2000) {
+                        Bullets[bulletcount].position.x = ship.position.x;
+                        Bullets[bulletcount].position.y = ship.position.y;
+                        bulletcount++;                    
+                        var firing = new Audio('firing.wav');
+                        firing.play();
+    
+    
+                    }
+                
+                }
+        
+                ship.mousemove = ship.touchmove = function(data)
+                {
+                    if(this.dragging)
+                    {
+                        var newPosition = this.data.getLocalPosition(this.parent);
+                        this.position.x = newPosition.x;
+                        this.position.y = newPosition.y;
+                    }
+                }
+        
+                ship.position.x = x;
+                ship.position.y = y;
+        
+                stage.addChild(ship);
+            }
+    
+            function animate() {
+            
+
+                requestAnimFrame( animate );
+                count += 0.005;
+
+
+                tilingSprite.tileScale.x = 1 ;
+                tilingSprite.tileScale.y = 1 ;
+        
+                tilingSprite.tilePosition.x += 1;
+                tilingSprite.tilePosition.y += 1;
+
+
+
+                tilingSprite2.tileScale.x = 1 ;
+                tilingSprite2.tileScale.y = 1 ;
+        
+                tilingSprite2.tilePosition.x += 1;
+                tilingSprite2.tilePosition.y += 1;
+
+
+                for(i= 0;i<Bullets.length;i++){ 
+                    if(Bullets[i].position.y<window.innerHeight && Bullets[i].position.y >0){
+                        movebullet(Bullets[i]);
+                    }
+
+                    if(Bullets[i].position.y <= 0){
+                        Bullets[i].position.y = 2000;
+                        bulletcount--;
+                    }
+            
+                }
+                  
+                for(k=0;k<20;k++){
+                    if (Enemys[k].position.y<window.innerHeight+30){
+                        moveEnemy(Enemys[k]);
+                    }
+                    else if(Enemys[k].position.y >= window.innerHeight +30){
+                        Enemys[k].position.y = 2000;
+                
+
+                    }
+                }
+                
+                for(i=0;i<Enemys.length;i++){
+                    if(Enemys[i].position.y < window.innerHeight && Enemys[i].position.y >0){
+                        if(ship.position.y - (ship.height /3) <= Enemys[i].position.y+ (Enemys[i].height/3) &&
+                            ship.position.y + (ship.height/3) >= Enemys[i].position.y -(Enemys[i].height/3)&&
+                            ship.position.x + (ship.width/3) >= Enemys[i].position.x -(Enemys[i].width/3) &&
+                            ship.position.x - (ship.width/3) <= Enemys[i].position.x +(Enemys[i].width/3)
+                    ){
+                    
+                            explode(ship.position.x,ship.position.y);
+                            health -=10;
+                            Enemys[i].position.y = [2000];
+                            
+                 
+                            shiplife.setText("Life :"+ health);
+
+                            if(health<=0){
+                                 alive = false;
+                                stage.removeChild(ship);   
+                            }
+               
+                        }
+                        for(j=0;j<Bullets.length;j++){
+                            if(Bullets[j].position.y <window.innerHeight && Bullets[j].position.y >0){
+                                if(Bullets[j].position.y - (Bullets[j].height /3) <= Enemys[i].position.y+ (Enemys[i].height/3) &&
+                                    Bullets[j].position.y + (Bullets[j].height/2) >= Enemys[i].position.y -(Enemys[i].height/3)&&
+                                    Bullets[j].position.x + (Bullets[j].width/3) >= Enemys[i].position.x -(Enemys[i].width/3) &&
+                                    Bullets[j].position.x - (Bullets[j].width/3) <= Enemys[i].position.x +(Enemys[i].width/3)
+                            ){
+
+                                    explode(Enemys[i].position.x,Enemys[i].position.y);
+                                    Enemys[i].position.y = 2000;
+                                    Bullets[j].position.y = 2000;
+                                    
+
+                                  
+                                    scorecount += 20;
+                                    text.setText("SCORE:"+ scorecount);
+                                             
+                                }
+                            }
+                        }
+                    }
+            
+                }
+
+                 for(i=0;i<stage.children.length;i++){
+                     if(stage.children[i].texture == texture6   ){
+                         if(stage.children[i].alpha > 0.001){
+                             stage.children[i].alpha = stage.children[i].alpha - 0.025;
+                         }
+
+                     }
+                 }
+
+                if(scorecount>150){
+
+                    tilingSprite.visible = false;
+                    level.setText("LEVEL 2");
+
+                for(var l=0; l<Enemys2.length; l++){
+                        if(Enemys2[l].position.y < window.innerHeight+100){
+                            moveEnemy(Enemys2[l]);
+                        }
+                        if (Enemys2[l].position.y >= window.innerHeight+100) {
+                            Enemys2[l].position.y = 2000;
+                            enemycount--;   
+                        }
+
+                    if(Enemys2[l].position.y < window.innerHeight && Enemys2[l].position.y >0){
+
+                        if(ship.position.y - (ship.height /3) <= Enemys2[l].position.y+ (Enemys2[l].height/3) &&
+                            ship.position.y + (ship.height/3) >= Enemys2[l].position.y -(Enemys2[l].height/3)&&
+                            ship.position.x + (ship.width/3) >= Enemys2[l].position.x -(Enemys2[l].width/3) &&
+                            ship.position.x - (ship.width/3) <= Enemys2[l].position.x +(Enemys2[l].width/3)
+                    ){
+                    
+                            explode(ship.position.x,ship.position.y);
+                            health -=20;
+                            Enemys2[l].position.y = [2000];
+                            
+                            shiplife.setText("Life :"+ health);
+                            enemycount--;
+
+                            if(health<=0){
+                                 alive = false;
+                                stage.removeChild(ship);
+                               
+                                
+                            }
+                        }
+
+                      for(j=0;j<Bullets.length;j++){
+                            if(Bullets[j].position.y <window.innerHeight && Bullets[j].position.y >0){
+
+                                    if(Bullets[j].position.y - (Bullets[j].height /3) <= Enemys2[l].position.y + (Enemys2[l].height/3) &&
+                                    Bullets[j].position.y + (Bullets[j].height/3) >= Enemys2[l].position.y - (Enemys2[l].height/3)&&
+                                    Bullets[j].position.x + (Bullets[j].width/4) >= Enemys2[l].position.x - (Enemys2[l].width/4) &&
+                                    Bullets[j].position.x - (Bullets[j].width/4) <= Enemys2[l].position.x + (Enemys2[l].width/4)
+    
+                            ){  
+                                    Bullets[j].position.y = 2000;
+                                    explode(Enemys2[l].position.x,Enemys2[l].position.y);
+                                        if(Enemys2[l].alpha == 0.5){
+                                            explode(Enemys2[l].position.x,Enemys2[l].position.y);      
+                                            Enemys2[l].position.y = 2000;
+                                            Bullets[j].position.y = 2000;
+                                            enemycount--;
+                                            
+
+                                            scorecount +=50;
+                                            text.setText("SCORE:"+ scorecount);
+                                        }
+                                            
+                                        else if (Enemys2[l].alpha == 1) {
+                                                Enemys2[l].alpha = 0.5;
+                                        };                                         
+
+                                }
+                            }
+                 
+                                    }
+
+                        }
+ 
+                    }   
+                }
+
+                if(scorecount>150 && enemycount <4){
+                    insertEnemy2(Math.floor(Math.random()*4));
+                }
+                
+                renderer.render(stage); 
+                
+                if(alive == false){
+                   finish();
+                    alive = true;
+                }
+
+
+            }
+
+        </script>
+    </body>
+</html>
